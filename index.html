@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>字母表謎題 — P的妄想</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Georgia', serif;
+    background: #0d0d0d;
+    color: #e8e0d0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; width: 100%; max-width: 860px; min-height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ── INTRO SCREEN ── */
+  #screen-intro {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 40px 20px;
+    background: radial-gradient(ellipse at center, #1a1010 0%, #0d0d0d 100%);
+  }
+  #screen-intro .subtitle { color: #8a7060; font-size: 14px; letter-spacing: 4px; margin-bottom: 16px; }
+  #screen-intro h1 { font-size: 36px; color: #c8a882; margin-bottom: 8px; text-shadow: 0 0 20px #8b4513; }
+  #screen-intro .chapter { font-size: 20px; color: #a08060; margin-bottom: 24px; }
+  .hero-image {
+    width: 100%; max-width: 560px;
+    border-radius: 10px;
+    border: 1px solid #3a2a1a;
+    margin: 0 auto 24px;
+    display: block;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .video-box {
+    width: 100%; max-width: 560px;
+    aspect-ratio: 16/9;
+    background: #1a1a1a;
+    border: 1px solid #3a2a1a;
+    border-radius: 8px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    margin: 0 auto 32px;
+    color: #5a4a3a;
+    font-size: 14px;
+    gap: 8px;
+  }
+  .video-box .icon { font-size: 48px; }
+  .video-box small { font-size: 12px; color: #3a3028; }
+  .btn {
+    padding: 14px 40px;
+    background: #6b2d1a;
+    color: #e8d8c0;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: background 0.2s;
+  }
+  .btn:hover { background: #8b3d2a; }
+  .btn.secondary { background: #2a2a2a; font-size: 14px; padding: 10px 28px; margin-top: 12px; }
+  .btn.secondary:hover { background: #3a3a3a; }
+
+  /* ── CLUE BOARD ── */
+  #screen-clues {
+    padding: 32px 20px;
+    background: #0f0f0f;
+  }
+  .board-title {
+    text-align: center;
+    color: #c8a882;
+    font-size: 22px;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  .board-subtitle { text-align: center; color: #6a5a4a; font-size: 13px; margin-bottom: 28px; }
+
+  .case-summary {
+    background: #1a1510;
+    border-left: 3px solid #6b2d1a;
+    padding: 16px 20px;
+    border-radius: 4px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #c0b0a0;
+  }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: #6b2d1a;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #2a1a10;
+    padding-bottom: 6px;
+  }
+
+  .suspects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .suspect-card {
+    background: #181410;
+    border: 1px solid #2a2018;
+    border-radius: 6px;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .suspect-card:hover { border-color: #6b2d1a; background: #201a14; }
+  .suspect-card .name { font-size: 15px; color: #d0b890; margin-bottom: 4px; }
+  .suspect-card .role { font-size: 12px; color: #7a6a5a; }
+
+  .clues-list { margin-bottom: 32px; }
+  .clue-item {
+    background: #141210;
+    border: 1px solid #2a2018;
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #b0a090;
+    position: relative;
+    padding-left: 44px;
+  }
+  .clue-num {
+    position: absolute;
+    left: 14px; top: 14px;
+    width: 22px; height: 22px;
+    background: #2a1510;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #8b3d2a;
+    font-weight: bold;
+  }
+
+  .board-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* ── SUSPECT MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #1a1510;
+    border: 1px solid #3a2818;
+    border-radius: 8px;
+    padding: 28px;
+    max-width: 420px;
+    width: 90%;
+  }
+  .modal h3 { color: #c8a882; margin-bottom: 4px; }
+  .modal .modal-role { color: #7a6a5a; font-size: 13px; margin-bottom: 16px; }
+  .modal .field { margin-bottom: 12px; }
+  .modal .field-label { font-size: 11px; color: #6b2d1a; letter-spacing: 2px; margin-bottom: 4px; }
+  .modal .field-value { font-size: 14px; color: #b0a090; line-height: 1.6; }
+  .modal-close { margin-top: 20px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 80px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1e3a1e;
+    border: 1px solid #4a8a4a;
+    color: #8aba8a;
+    padding: 12px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 200;
+    pointer-events: none;
+    max-width: 90vw;
+    white-space: normal;
+    text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── CLUE BADGE ── */
+  .clue-badge-wrap {
+    margin-left: auto;
+    position: relative;
+  }
+  .clue-badge {
+    background: #2a1a0a;
+    border: 1px solid #6b2d1a;
+    color: #c8a882;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    cursor: default;
+    white-space: nowrap;
+  }
+  .clue-badge.has-clues { background: #1e3010; border-color: #5a8a3a; color: #8aba6a; }
+
+  .clue-popover {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #1a1510;
+    border: 1px solid #3a2818;
+    border-radius: 8px;
+    padding: 12px 14px;
+    min-width: 240px;
+    z-index: 300;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  }
+  .clue-badge-wrap:hover .clue-popover { display: block; }
+  .clue-popover-title { font-size: 11px; color: #6b2d1a; letter-spacing: 2px; margin-bottom: 10px; }
+  .clue-popover-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid #2a1a10;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .clue-popover-item:last-child { border-bottom: none; }
+  .clue-popover-item.found { color: #8aba8a; }
+  .clue-popover-item.not-found { color: #4a3a2a; }
+
+  /* ── DISCOVERED CLUES (in accusation) ── */
+  .discovered-clues {
+    width: 100%;
+    background: #141210;
+    border: 1px solid #2a3818;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .discovered-clues.visible { display: block; }
+  .discovered-clues .dc-title { font-size: 11px; color: #5a8a3a; letter-spacing: 2px; margin-bottom: 10px; }
+  .discovered-clue-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 6px 0; border-bottom: 1px solid #1e2818;
+    font-size: 13px; color: #8ab88a; line-height: 1.5;
+  }
+  .discovered-clue-item:last-child { border-bottom: none; }
+
+  /* ── CHAT SCREEN ── */
+  #screen-chat {
+    padding: 0;
+    background: #0f0f0f;
+  }
+  .chat-header {
+    padding: 16px 20px;
+    background: #141210;
+    border-bottom: 1px solid #2a2018;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .chat-header .back-btn {
+    background: none;
+    border: none;
+    color: #7a6a5a;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 8px 0 0;
+  }
+  .chat-header .assistant-info .name { font-size: 15px; color: #c8a882; }
+  .chat-header .assistant-info .status { font-size: 12px; color: #5a9a5a; }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+    height: calc(100vh - 160px);
+  }
+  .msg {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .msg.assistant {
+    align-self: flex-start;
+    background: #1e1a14;
+    border: 1px solid #2a2018;
+    color: #c0b0a0;
+    border-bottom-left-radius: 4px;
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: #3a1a0a;
+    color: #e0d0b8;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.thinking {
+    align-self: flex-start;
+    background: #141210;
+    border: 1px solid #2a2018;
+    color: #5a4a3a;
+    font-style: italic;
+    font-size: 13px;
+  }
+
+  .chat-input-area {
+    padding: 12px 16px;
+    background: #141210;
+    border-top: 1px solid #2a2018;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+  .chat-input-area textarea {
+    flex: 1;
+    background: #1e1a14;
+    border: 1px solid #3a2a18;
+    border-radius: 8px;
+    color: #e8e0d0;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: none;
+    min-height: 44px;
+    max-height: 120px;
+    outline: none;
+  }
+  .chat-input-area textarea:focus { border-color: #6b2d1a; }
+  .send-btn {
+    background: #6b2d1a;
+    border: none;
+    color: #e8d8c0;
+    width: 44px; height: 44px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .send-btn:hover { background: #8b3d2a; }
+  .send-btn:disabled { background: #2a1a10; color: #4a3a2a; cursor: not-allowed; }
+
+  .quick-questions {
+    padding: 10px 16px;
+    background: #0f0f0f;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #1e1a14;
+  }
+  .quick-btn {
+    background: #1e1a14;
+    border: 1px solid #2a2018;
+    color: #8a7a6a;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .quick-btn:hover { border-color: #6b2d1a; color: #c0a880; }
+
+  /* ── ACCUSATION SCREEN ── */
+  #screen-accuse {
+    padding: 32px 20px;
+    align-items: center;
+  }
+  #screen-accuse h2 { color: #c8a882; font-size: 24px; margin-bottom: 8px; text-align: center; }
+  #screen-accuse p { color: #7a6a5a; font-size: 14px; margin-bottom: 32px; text-align: center; }
+  .accuse-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    width: 100%;
+    margin-bottom: 24px;
+  }
+  .accuse-card {
+    background: #181410;
+    border: 2px solid #2a2018;
+    border-radius: 8px;
+    padding: 24px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .accuse-card:hover { border-color: #c8a882; background: #201a14; transform: translateY(-2px); }
+  .accuse-card.selected { border-color: #c8a882; background: #201a14; }
+  .accuse-card .acc-name { font-size: 16px; color: #d0b890; margin-bottom: 6px; }
+  .accuse-card .acc-role { font-size: 12px; color: #6a5a4a; }
+
+  .reasoning-box {
+    width: 100%;
+    background: #1a1510;
+    border: 1px solid #3a2818;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .reasoning-box.visible { display: block; }
+  .reasoning-box .selected-label { font-size: 12px; color: #6b2d1a; letter-spacing: 2px; margin-bottom: 6px; }
+  .reasoning-box .selected-name { font-size: 18px; color: #c8a882; margin-bottom: 16px; }
+  .reasoning-box textarea {
+    width: 100%;
+    background: #141210;
+    border: 1px solid #2a2018;
+    border-radius: 6px;
+    color: #e8e0d0;
+    padding: 12px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 100px;
+    outline: none;
+    line-height: 1.7;
+  }
+  .reasoning-box textarea:focus { border-color: #6b2d1a; }
+  .reasoning-box .reasoning-hint { font-size: 12px; color: #4a3a2a; margin-bottom: 10px; }
+  .judging-msg { color: #8a7060; font-size: 14px; font-style: italic; text-align: center; margin: 12px 0; display: none; }
+
+  /* ── RESULT SCREEN ── */
+  #screen-result {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .result-icon { font-size: 72px; margin-bottom: 24px; }
+  #screen-result h2 { font-size: 28px; margin-bottom: 16px; }
+  #screen-result.correct h2 { color: #6ab06a; }
+  #screen-result.wrong h2 { color: #b06a6a; }
+  .result-truth {
+    background: #1a1510;
+    border: 1px solid #3a2818;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 500px;
+    text-align: left;
+    margin: 24px auto;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #b0a090;
+  }
+  .result-truth strong { color: #c8a882; }
+</style>
+</head>
+<body>
+
+<!-- ══ INTRO SCREEN ══ -->
+<div id="screen-intro" class="screen active">
+  <div class="subtitle">ALPHABET MYSTERY</div>
+  <h1>字母表謎題</h1>
+  <div class="chapter">第一章：P 的 妄 想</div>
+
+  <img src="四個推理主角.jpg" class="hero-image" alt="四位推理主角">
+
+  <a href="https://notebooklm.google.com/notebook/153ab160-9aad-40b1-8654-b10bfcc3a761/artifact/8a305b93-1e66-40ed-bacb-8d65ceac078c?utm_source=nlm_web_share&utm_medium=google_oo&utm_campaign=art_share_1&utm_content=&utm_smc=nlm_web_share_google_oo_art_share_1_" target="_blank" style="text-decoration:none;display:block;max-width:560px;width:100%;margin:0 auto 24px;">
+    <div class="video-box" style="cursor:pointer;transition:border-color 0.2s,background 0.2s;" onmouseover="this.style.borderColor='#6b2d1a';this.style.background='#1e1410'" onmouseout="this.style.borderColor='#3a2a1a';this.style.background='#1a1a1a'">
+      <div class="icon">🎧</div>
+      <div style="color:#c8a882;">收聽案件導覽音頻</div>
+      <small style="color:#5a4a3a;">由 NotebookLM 生成 · 點擊在新分頁開啟</small>
+    </div>
+  </a>
+
+  <button class="btn" onclick="goToScreen('screen-clues')">開始調查</button>
+</div>
+
+<!-- ══ CLUE BOARD ══ -->
+<div id="screen-clues" class="screen">
+  <div style="position:relative; overflow:hidden; height:160px; background:#0a0808;">
+    <img src="四個推理主角.jpg" style="width:100%;object-fit:cover;object-position:center top;opacity:0.35;filter:grayscale(30%);">
+    <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,#0f0f0f 100%);"></div>
+    <div style="position:absolute;bottom:16px;left:20px;">
+      <div class="board-title" style="text-align:left;margin:0 0 4px;">案件資料室</div>
+      <div class="board-subtitle" style="text-align:left;margin:0;">P 的 妄 想</div>
+    </div>
+  </div>
+  <div style="padding: 20px 20px 0;">
+    <div class="board-title" style="display:none;"></div>
+    <div class="board-subtitle" style="display:none;"></div>
+
+    <div class="case-summary" id="case-summary">讀取中...</div>
+
+    <div class="section-label">嫌 疑 人</div>
+    <div class="suspects-grid" id="suspects-grid"></div>
+
+    <div class="section-label">已知線索</div>
+    <div class="clues-list" id="clues-list"></div>
+
+    <div class="board-actions">
+      <button class="btn" onclick="goToScreen('screen-chat')">進入線索調查室</button>
+      <button class="btn secondary" onclick="goToScreen('screen-accuse')">指認兇手</button>
+    </div>
+    <div style="height: 32px;"></div>
+  </div>
+</div>
+
+<!-- ══ SUSPECT MODAL ══ -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-name"></h3>
+    <div class="modal-role" id="modal-role"></div>
+    <div class="field">
+      <div class="field-label">可疑動機</div>
+      <div class="field-value" id="modal-motive"></div>
+    </div>
+    <div class="field">
+      <div class="field-label">不在場說詞</div>
+      <div class="field-value" id="modal-alibi"></div>
+    </div>
+    <button class="btn secondary modal-close" onclick="closeModal()">關閉</button>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast"></div>
+
+<!-- ══ CHAT SCREEN ══ -->
+<div id="screen-chat" class="screen">
+  <div class="chat-header">
+    <button class="back-btn" onclick="goToScreen('screen-clues')">←</button>
+    <div class="assistant-info">
+      <div class="name">偵探助理</div>
+      <div class="status">● 線上調查中</div>
+    </div>
+    <div class="clue-badge-wrap">
+      <div class="clue-badge" id="clue-badge">🔎 0 / 4</div>
+      <div class="clue-popover" id="clue-popover">
+        <div class="clue-popover-title">關鍵線索進度</div>
+        <div id="clue-popover-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-questions">
+    <button class="quick-btn" onclick="sendQuick('被害人如何死亡？')">被害人如何死亡？</button>
+    <button class="quick-btn" onclick="sendQuick('案發當天各人在哪？')">案發當天各人在哪？</button>
+    <button class="quick-btn" onclick="sendQuick('現場有什麼異常？')">現場有什麼異常？</button>
+    <button class="quick-btn" onclick="sendQuick('誰最有嫌疑？')">誰最有嫌疑？</button>
+    <button class="quick-btn" onclick="sendQuick('地毯有什麼問題？')">地毯有什麼問題？</button>
+  </div>
+
+  <div class="chat-messages" id="chat-messages"></div>
+
+  <div class="chat-input-area">
+    <textarea
+      id="chat-input"
+      placeholder="向偵探助理提問..."
+      rows="1"
+      onkeydown="handleKey(event)"
+      oninput="autoResize(this)"
+    ></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+</div>
+
+<!-- ══ ACCUSATION SCREEN ══ -->
+<div id="screen-accuse" class="screen">
+  <h2>指認兇手</h2>
+  <p>選出你認為的兇手，並說明你的推理依據</p>
+  <div class="accuse-grid" id="accuse-grid"></div>
+
+  <div class="discovered-clues" id="discovered-clues-panel">
+    <div class="dc-title">🔎 線索調查中已發現的關鍵線索</div>
+    <div id="discovered-clues-list"></div>
+  </div>
+
+  <div class="reasoning-box" id="reasoning-box">
+    <div class="selected-label">你指認的兇手</div>
+    <div class="selected-name" id="selected-name"></div>
+
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:#6b2d1a;letter-spacing:2px;margin-bottom:8px;">推理需涵蓋以下 4 個關鍵點</div>
+      <div id="key-points-checklist"></div>
+    </div>
+
+    <textarea id="reasoning-input" placeholder="把你的推理寫下來，盡量涵蓋以上 4 個關鍵點..."></textarea>
+    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn" id="submit-accuse-btn" onclick="submitAccuse()">提交推理</button>
+      <button class="btn secondary" onclick="cancelAccuse()">重新選擇</button>
+    </div>
+  </div>
+
+  <div class="judging-msg" id="judging-msg">AI 正在評斷你的推理...</div>
+  <button class="btn secondary" style="margin-top:8px;" onclick="goToScreen('screen-clues')">← 回到案件資料室</button>
+</div>
+
+<!-- ══ RESULT SCREEN ══ -->
+<div id="screen-result" class="screen">
+  <div class="result-icon" id="result-icon"></div>
+  <h2 id="result-title"></h2>
+  <div class="result-truth" id="result-truth"></div>
+  <button class="btn" onclick="goToScreen('screen-clues')">← 重新調查</button>
+</div>
+
+<script>
+// ── 故事資料 ──
+const STORY_DATA = {"title":"P的妄想","summary":"坐輪椅的翻譯家西川朱美，被發現在自家洋館的臥室中毒身亡，眾人皆知她患有「被毒妄想」而對飲食異常謹慎。然而，偵探們在案發現場發現的紅茶罐和地毯污漬，似乎暗示這場死亡背後，藏著一個利用房屋特殊結構和精密機關設計的巧妙騙局。","setting":"一棟坐北朝南的新藝術風格二層紅磚洋館，擁有千坪廣闊庭院。洋館對面正進行高層公寓的建案施工。室內裝潢講究，被害人居住的畫室鋪設純白色短毛地毯，且落地窗前常拉著藏青色天鵝絨窗簾。","victim":{"name":"西川朱美","role":"行動不便的女性翻譯家，乘坐輪椅，曾被認為患有「被毒妄想」"},"suspects":[{"name":"富樫加壽子","role":"女傭","motive":"朱美夫人對加壽子並不好，心懷怨恨，希望她死了能獲得遺產。","alibi":"案發時（下午五點到六點）在餐廳和廚房工作，明世和理繪可證明她在餐廳閒聊並幫忙。"},{"name":"西川真一","role":"姪子，內科醫生，朱美主治醫師","motive":"年約40歲，儘管收入豐厚，但因需支付前妻贍養費且喜歡購買高級進口車，手頭一直很緊。","alibi":"案發時在庭院散步，只有他一人。"},{"name":"福島芳子","role":"姪女，室內裝潢設計師","motive":"年約35歲，經營室內裝潢不善，急需資金周轉。","alibi":"案發時在洋館內參觀室內裝潢，聲稱不可能下毒。"},{"name":"古澤清吾","role":"律師","motive":"年約60歲，傳聞曾挪用客戶資金，且朱美曾與他討論法律問題，可能與遺囑相關。","alibi":"案發時一直在閱覽室，只有他一人。"}],"clues":[{"id":"clue_1","content":"六點時，明世與理繪在畫室的進門右側牆邊發現一罐紅茶滾落在地，紅褐色液體從打開的罐口流出，在地毯上形成污漬，地毯已被浸染。","hint_level":"easy"},{"id":"clue_2","content":"案發當天，朱美曾詢問加壽子二樓客房的地毯為何不見，加壽子回答她不小心弄髒了並送出去清洗。","hint_level":"easy"},{"id":"clue_3","content":"明世小姐於下午五點將朱美夫人送回臥室時，曾經過畫室，當時畫室地板上沒有紅茶罐及污漬；但六點與理繪再次進入畫室時，卻發現了紅茶罐和污漬。","hint_level":"medium"},{"id":"clue_4","content":"朱美在下午五點至六點的休息時間內，臥房裡只有她一人。而加壽子表示她這段時間一直在餐廳和廚房工作，明世和理繪也證明她們與加壽子一同在餐廳閒聊，並偶爾協助加壽子。","hint_level":"medium"},{"id":"clue_5","content":"畫室約有八張榻榻米大，屋內沒有擺放任何傢俱，地板鋪著純白色的短毛地毯。南側的落地玻璃窗前，藏青色天鵝絨窗簾自下午五點至六點一直緊閉。","hint_level":"hard"}],"truth":{"killer":"富樫加壽子","method":"加壽子趁朱美夫人不備，先將氰化鉀膠囊偽裝成藥品讓其服下。接著，她預先在畫室地毯上鋪設了另一塊一模一樣的地毯，並將裝有氰化鉀的紅茶倒在上層地毯。利用碎冰固定捲起的上層地毯，並將空罐塞入其中，藏於窗簾後。待碎冰融化，因地板傾斜，地毯自動展開，偽造出紅茶在朱美休息時打翻的現場。","reason":"朱美夫人長期對加壽子不滿且計畫將其從遺囑中除名，加壽子因此懷恨在心，為圖謀遺產而痛下殺手。"},"ai_role":"你是一位冷靜的偵探助理，協助玩家調查這起案件。你知道所有真相，但不能直接說出兇手，只能根據玩家的問題給予適當線索。easy線索可自由分享，medium線索需要玩家問到關鍵問題才給，hard線索只有在玩家非常接近真相時才暗示。"};
+
+let STORY = null;
+
+async function loadStory() {
+  STORY = STORY_DATA;
+  renderClueBoard();
+  renderAccuseGrid();
+  updateClueBadge();
+  initChat();
+}
+
+function renderClueBoard() {
+  document.getElementById('case-summary').textContent = STORY.summary;
+
+  const sg = document.getElementById('suspects-grid');
+  sg.innerHTML = STORY.suspects.map(s => `
+    <div class="suspect-card" onclick="openModal(${JSON.stringify(s).replace(/"/g, '&quot;')})">
+      <div class="name">${s.name}</div>
+      <div class="role">${s.role}</div>
+    </div>
+  `).join('');
+
+  const cl = document.getElementById('clues-list');
+  cl.innerHTML = STORY.clues.map((c, i) => `
+    <div class="clue-item">
+      <div class="clue-num">${i + 1}</div>
+      ${c.content}
+    </div>
+  `).join('');
+}
+
+function renderAccuseGrid() {
+  const ag = document.getElementById('accuse-grid');
+  ag.innerHTML = STORY.suspects.map(s => `
+    <div class="accuse-card" id="acc-${s.name}" onclick="selectSuspect('${s.name}')">
+      <div class="acc-name">${s.name}</div>
+      <div class="acc-role">${s.role}</div>
+    </div>
+  `).join('');
+}
+
+let selectedSuspect = null;
+
+function selectSuspect(name) {
+  selectedSuspect = name;
+  document.querySelectorAll('.accuse-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('acc-' + name).classList.add('selected');
+  document.getElementById('selected-name').textContent = name;
+
+  // 顯示線索調查中發現的線索
+  const panel = document.getElementById('discovered-clues-panel');
+  const list = document.getElementById('discovered-clues-list');
+  if (discoveredClues.size > 0) {
+    const items = CLUE_KEYWORDS.filter(c => discoveredClues.has(c.id));
+    list.innerHTML = items.map(c => `
+      <div class="discovered-clue-item">
+        <span>✅</span><span>${c.tip.replace('💡 線索：', '')}</span>
+      </div>`).join('');
+    panel.classList.add('visible');
+  } else {
+    panel.classList.remove('visible');
+  }
+
+  // 渲染關鍵點 checklist
+  document.getElementById('key-points-checklist').innerHTML = KEY_POINTS.map(p => {
+    const found = discoveredClues.has(p.id);
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid #2a1a10;font-size:13px;">
+      <span style="flex-shrink:0;">${found ? '✅' : '⬜'}</span>
+      <div>
+        <span style="color:${found ? '#8ab88a' : '#c8a882'};font-weight:bold;">${p.label}</span>
+        <span style="color:#5a4a3a;font-size:12px;margin-left:6px;">${found ? '（已從線索調查中發現）' : ''}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('reasoning-box').classList.add('visible');
+  document.getElementById('reasoning-input').value = '';
+  document.getElementById('reasoning-input').focus();
+}
+
+function cancelAccuse() {
+  selectedSuspect = null;
+  document.querySelectorAll('.accuse-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('reasoning-box').classList.remove('visible');
+}
+
+// 推理必須涵蓋的關鍵點（兇手正確時才檢查）
+const KEY_POINTS = [
+  { id: 'motive', label: '動機', desc: '加壽子對朱美夫人心懷怨恨，覬覦遺產' },
+  { id: 'carpet',  label: '地毯消失', desc: '二樓客房地毯不見，加壽子謊稱弄髒送洗，實為布置犯案道具' },
+  { id: 'timing',  label: '紅茶罐出現時機', desc: '五點時畫室地板乾淨，六點卻出現已浸染的紅茶痕跡，證明是事先安排' },
+  { id: 'mechanism', label: '犯案機關', desc: '利用碎冰固定捲起的地毯和紅茶罐，碎冰融化後地板傾斜使地毯自動展開，偽造現場' }
+];
+
+async function submitAccuse() {
+  const reasoning = document.getElementById('reasoning-input').value.trim();
+  if (!reasoning) { alert('請先填寫你的推理依據'); return; }
+
+  document.getElementById('submit-accuse-btn').disabled = true;
+  document.getElementById('judging-msg').style.display = 'block';
+
+  const isCorrectSuspect = selectedSuspect === STORY.truth.killer;
+
+  const prompt = `你是推理遊戲的嚴格裁判。請根據以下標準評斷玩家的推理。
+
+【案件真相】
+兇手：${STORY.truth.killer}
+犯案手法：${STORY.truth.method}
+動機：${STORY.truth.reason}
+
+【必要推理關鍵點（共 ${KEY_POINTS.length} 個）】
+${KEY_POINTS.map((p, i) => `${i+1}. ${p.label}：${p.desc}`).join('\n')}
+
+【玩家指認的兇手】${selectedSuspect}（${isCorrectSuspect ? '正確' : '錯誤'}）
+【玩家推理內容】${reasoning}
+
+請嚴格評斷，並用以下格式回答（JSON）：
+{
+  "points_hit": [玩家有提到的關鍵點編號，例如 [1,2]],
+  "verdict": "insufficient"（推理不足）或 "success"（推理完整，兇手正確且涵蓋至少3個關鍵點）,
+  "comment": "老偵探的點評，說明哪些點說對了、哪些還缺，不要直接給答案，給方向提示。150字以內。"
+}
+
+只輸出 JSON，不要其他文字。`;
+
+  const judgeHistory = [{ role: 'user', parts: [{ text: prompt }] }];
+  const res = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: judgeHistory })
+  });
+  const data = await res.json();
+  let raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+  raw = raw.replace(/```json|```/g, '').trim();
+
+  let result = {};
+  try { result = JSON.parse(raw); } catch(e) { result = { verdict: 'insufficient', points_hit: [], comment: raw }; }
+
+  document.getElementById('judging-msg').style.display = 'none';
+  document.getElementById('submit-accuse-btn').disabled = false;
+
+  const hit = result.points_hit || [];
+  const isSuccess = result.verdict === 'success' && isCorrectSuspect;
+
+  // 顯示關鍵點進度
+  const pointsHTML = KEY_POINTS.map((p, i) => {
+    const done = hit.includes(i + 1);
+    return `<div style="padding:6px 0;border-bottom:1px solid #2a1a10;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:16px;">${done ? '✅' : '⬜'}</span>
+      <span style="color:${done ? '#8ab88a' : '#5a4a3a'};font-size:13px;">${p.label}</span>
+    </div>`;
+  }).join('');
+
+  const rs = document.getElementById('screen-result');
+  rs.className = 'screen ' + (isSuccess ? 'correct' : 'wrong');
+  document.getElementById('result-icon').textContent = isSuccess ? '🔍' : '❌';
+  document.getElementById('result-title').textContent = isSuccess
+    ? '推理完整！案件偵破！'
+    : '推理不足，無法定罪';
+
+  document.getElementById('result-truth').innerHTML = `
+    <strong>推理關鍵點（${hit.length} / ${KEY_POINTS.length}）</strong>
+    <div style="margin:10px 0 16px;">${pointsHTML}</div>
+    <strong>偵探點評：</strong><br>
+    <span style="color:#c0b0a0;">${(result.comment || '').replace(/\n/g, '<br>')}</span>
+    ${isSuccess ? `<hr style="border-color:#2a2018;margin:16px 0;">
+      <strong>真相揭曉：</strong><br>
+      <strong>兇手：</strong>${STORY.truth.killer}<br><br>
+      <strong>手法：</strong>${STORY.truth.method}<br><br>
+      <strong>動機：</strong>${STORY.truth.reason}` : ''}
+  `;
+  goToScreen('screen-result');
+}
+
+// ── MODAL ──
+function openModal(suspect) {
+  if (typeof suspect === 'string') suspect = JSON.parse(suspect.replace(/&quot;/g, '"'));
+  document.getElementById('modal-name').textContent = suspect.name;
+  document.getElementById('modal-role').textContent = suspect.role;
+  document.getElementById('modal-motive').textContent = suspect.motive;
+  document.getElementById('modal-alibi').textContent = suspect.alibi;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+// ── SCREENS ──
+function goToScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── ACCUSATION ── (handled by selectSuspect / submitAccuse above)
+
+// ── CHAT ──
+const GEMINI_KEY = 'REMOVED';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
+
+let chatHistory = [];
+
+// ── 關鍵線索偵測 ──
+const CLUE_KEYWORDS = [
+  { id: 1, label: '動機', tip: '💡 線索：加壽子對朱美夫人的怨恨似乎與遺產有關', keywords: ['遺產', '怨恨', '除名', '遺囑', '財產', '繼承'] },
+  { id: 2, label: '地毯消失', tip: '💡 線索：二樓地毯消失的說法值得深究', keywords: ['地毯', '客房', '送洗', '不見', '消失', '弄髒'] },
+  { id: 3, label: '時間矛盾', tip: '💡 線索：五點到六點之間，現場發生了什麼？', keywords: ['五點', '六點', '污漬', '時間', '浸染', '休息期間', '紅茶'] },
+  { id: 4, label: '犯案機關', tip: '💡 線索：地板傾斜與碎冰之間有什麼關聯？', keywords: ['碎冰', '傾斜', '機關', '展開', '捲起', '窗簾後', '自動'] }
+];
+
+const discoveredClues = new Set();
+
+function checkClueKeywords(text) {
+  CLUE_KEYWORDS.forEach(clue => {
+    if (discoveredClues.has(clue.id)) return;
+    const hit = clue.keywords.some(kw => text.includes(kw));
+    if (hit) {
+      discoveredClues.add(clue.id);
+      showToast(clue.tip);
+      updateClueBadge();
+    }
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function updateClueBadge() {
+  const n = discoveredClues.size;
+  const badge = document.getElementById('clue-badge');
+  badge.textContent = `🔎 ${n} / 4`;
+  badge.className = 'clue-badge' + (n > 0 ? ' has-clues' : '');
+
+  const list = document.getElementById('clue-popover-list');
+  list.innerHTML = CLUE_KEYWORDS.map(c => {
+    const found = discoveredClues.has(c.id);
+    return `<div class="clue-popover-item ${found ? 'found' : 'not-found'}">
+      <span>${found ? '✅' : '⬜'}</span>
+      <span>${c.label}</span>
+    </div>`;
+  }).join('');
+}
+
+function initChat() {
+  const systemContext = `
+你是一位冷靜的偵探助理，正在協助玩家調查「P的妄想」這起謀殺案。
+
+案件背景：${STORY.summary}
+
+場景：${STORY.setting}
+
+受害者：${STORY.victim.name}（${STORY.victim.role}）
+
+嫌疑人：${STORY.suspects.map(s => `${s.name}（${s.role}），${s.alibi}`).join('；')}
+
+線索（按難度）：
+${STORY.clues.map(c => `[${c.hint_level}] ${c.content}`).join('\n')}
+
+真相（不可直接透露）：兇手是${STORY.truth.killer}，手法：${STORY.truth.method}
+
+【可以回答玩家的背景資訊】
+
+死因與時間：
+- 西川朱美死因是氰化鉀中毒
+- 今年3月2日起朱美開始改用罐裝茶
+- 有人問她為什麼用罐裝茶，她說「罐裝茶方便便捷，味道也挺不錯的」
+
+【絕對不能主動透露、也不能直接回答的隱藏線索（只有玩家自己推理出來才確認）】
+- 「被毒妄想」是加壽子散佈的謊言這件事
+- 朱美喝罐裝茶的真正原因（隱瞞地板傾斜）
+- 地板傾斜和犯案機關的關聯
+- 碎冰的用途
+- 誰是兇手
+
+案發當天時間軸：
+- 下午五點，加壽子推輪椅送朱美夫人休息，不小心把輪椅撞上餐廳大門，朱美差點被摔出去，說「你幹嘛？要把門撞壞嗎？」
+- 明世改來幫忙，朱美交代明世六點再來接她，說「不想讓加壽子再將事情搞得一團亂」
+- 明世把朱美送到沙發後，想委婉勸朱美別太針對加壽子，朱美只嘟嚷「是啊」便閉眼，不想繼續聊
+- 六點，加壽子準備去接朱美，明世主動說「讓我去吧」，加壽子臉上露出落寞的微笑
+- 明世和理繪發現畫室地毯上有紅茶罐，紅褐色液體流出，地毯已被浸染一段時間
+- 再進臥室，發現朱美倒在沙發旁，嘴邊有嘔吐物痕跡
+
+各嫌疑人背景：
+- 西川真一：年約40歲、美男子，收入豐富但要付前妻贍養費，又愛買高級進口車，一直很缺錢
+- 福島芳子：年約35歲、身材微胖，穿著品味不怎樣，經營室內裝潢公司，經營不善，急需資金
+- 古澤清吾：年約60歲、西裝筆挺，看起來嚴肅謹慎，眼神銳利，傳聞曾挪用客戶資金
+- 古澤說朱美夫人曾找他討論法律問題，認為加壽子要毒害她，想將加壽子從遺囑除名
+
+加壽子自述：
+- 加壽子說過：「夫人覺得我要毒害她，恨我、想搶她的財產，不吃我煮的東西，開始用罐裝茶。朱美夫人都吃外食，我很擔心她的健康。」
+
+畫室與臥室結構：
+- 朱美的房間由「畫室」和「臥室」組成，要進臥室必須先經過畫室
+- 畫室白牆掛著莫奈、德加、雷諾阿等印象派小畫作，是珠美祖父戰前收藏
+- 十年前朱美遭遇意外開始輪椅生活，因長毛地毯阻礙輪椅，才將全屋地毯換成短毛
+
+四位偵探背景（朱美茶會的客人）：
+- 峰原卓：房東，年約55歲，前律師，靠母親遺產蓋了這棟房子，神態穩重，邏輯思維縝密，已解決三件案件
+- 奈良井明世：犯罪方面翻譯家，推理能力中等
+- 後藤慎司：刑警，常與明世互虧
+- 竹野禮繪：Psychia醫師，經常看似心不在焉，說出的話卻思路清晰
+
+章節名稱的意義（最後可以告訴玩家）：
+- 「P的妄想」中「P」有兩層含義：被毒妄想 Delusion of Poison，以及精神科醫生 Psychiatrist 的妄想（禮繪把朱美診斷為被毒妄想，但這個診斷本身才是妄想）
+- 「P」也暗示犯案機關：捲起的地毯從側面看像橫躺的字母「P」
+
+${STORY.ai_role}
+
+重要規則：
+1. 絕對不能直接說出兇手名字
+2. 用繁體中文回答，說話口語自然，像在跟朋友聊天，不要用文言或書面語
+3. 每次回答控制在80字以內，簡短有重點
+4. 【嚴格禁止】回答結尾加任何問句或引導，例如「你有沒有注意到…」「你覺得呢？」「是不是很奇怪？」「你想想看…」——這些一律不准出現
+5. 回答完就結束，句點收尾，不加任何延伸
+6. 只有玩家主動說「給我提示」「有什麼線索嗎」才可以主動引導
+7. 禁止使用：「然而」「此乃」「不妨」「值得注意的是」等文謅謅的詞
+`;
+
+  chatHistory = [{ role: 'user', parts: [{ text: systemContext + '\n\n請用一句話自我介紹，告訴玩家你能幫什麼忙。' }] }];
+
+  addMessage('assistant', '思考中...', 'thinking');
+
+  callGemini().then(reply => {
+    removeLast();
+    addMessage('assistant', reply);
+  });
+}
+
+function addMessage(role, text, cls) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + (cls || role);
+  div.textContent = text;
+  const container = document.getElementById('chat-messages');
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+
+function removeLast() {
+  const container = document.getElementById('chat-messages');
+  if (container.lastChild) container.removeChild(container.lastChild);
+}
+
+async function callGemini() {
+  const body = { contents: chatHistory };
+  const res = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '（無法回應，請再試一次）';
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text || document.getElementById('send-btn').disabled) return;
+
+  input.value = '';
+  autoResize(input);
+
+  addMessage('user', text);
+  chatHistory.push({ role: 'user', parts: [{ text }] });
+
+  document.getElementById('send-btn').disabled = true;
+  const thinking = addMessage('assistant', '正在思考...', 'thinking');
+
+  const reply = await callGemini();
+  thinking.remove();
+  addMessage('assistant', reply);
+  chatHistory.push({ role: 'model', parts: [{ text: reply }] });
+  checkClueKeywords(reply);
+
+  document.getElementById('send-btn').disabled = false;
+}
+
+function sendQuick(q) {
+  document.getElementById('chat-input').value = q;
+  sendMessage();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+loadStory();
+</script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+*.py
+*.png
+chapter1_data.json
+.DS_Store
