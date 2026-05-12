@@ -716,24 +716,28 @@ async function submitAccuse() {
 
   const isCorrectSuspect = selectedSuspect === STORY.truth.killer;
 
-  const prompt = `你是推理遊戲的嚴格裁判。請根據以下標準評斷玩家的推理。
+  const prompt = `你是推理遊戲的嚴格裁判。你的任務是判斷玩家的推理邏輯是否合理，而不是單純看他猜對名字。
 
-【案件真相】
-兇手：${STORY.truth.killer}
+【案件真相（裁判專用，勿洩漏）】
+真正的兇手：${STORY.truth.killer}
 犯案手法：${STORY.truth.method}
 動機：${STORY.truth.reason}
 
 【必要推理關鍵點（共 ${KEY_POINTS.length} 個）】
 ${KEY_POINTS.map((p, i) => `${i+1}. ${p.label}：${p.desc}`).join('\n')}
 
-【玩家指認的兇手】${selectedSuspect}（${isCorrectSuspect ? '正確' : '錯誤'}）
+【玩家指認的兇手】${selectedSuspect}
 【玩家推理內容】${reasoning}
 
-請嚴格評斷，並用以下格式回答（JSON）：
+【評斷標準】
+- verdict 為 "success" 的條件：玩家指認的兇手正確，且推理內容邏輯合理、有具體證據支撐，涵蓋至少3個關鍵點。光猜對名字但推理空洞，或推理邏輯跳躍無依據，一律判 "insufficient"。
+- verdict 為 "insufficient" 的條件：兇手猜錯，或兇手猜對但推理不夠紮實、缺少關鍵邏輯。
+
+請用以下格式回答（JSON）：
 {
-  "points_hit": [玩家有提到的關鍵點編號，例如 [1,2]],
-  "verdict": "insufficient"（推理不足）或 "success"（推理完整，兇手正確且涵蓋至少3個關鍵點）,
-  "comment": "老偵探的點評，說明哪些點說對了、哪些還缺，不要直接給答案，給方向提示。150字以內。"
+  "points_hit": [玩家推理中有具體依據支撐的關鍵點編號，例如 [1,2]],
+  "verdict": "insufficient" 或 "success",
+  "comment": "老偵探的點評，繁體中文，口語自然。說明哪些推理有依據、哪些地方邏輯還不夠，不要直接說出答案，給方向。150字以內。"
 }
 
 只輸出 JSON，不要其他文字。`;
