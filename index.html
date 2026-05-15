@@ -982,6 +982,7 @@ async function sendMessage() {
 
   input.value = '';
   autoResize(input);
+  input.focus();
 
   addMessage('user', text);
   chatHistory.push({ role: 'user', parts: [{ text }] });
@@ -996,6 +997,7 @@ async function sendMessage() {
   checkClueKeywords(reply);
 
   document.getElementById('send-btn').disabled = false;
+  input.focus();
 }
 
 function sendQuick(q) {
