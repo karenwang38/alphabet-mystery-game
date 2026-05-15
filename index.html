@@ -809,6 +809,12 @@ function closeModal() {
 function goToScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  if (id === 'screen-chat') {
+    const input = document.getElementById('chat-input');
+    input.value = '';
+    autoResize(input);
+    input.focus();
+  }
 }
 
 // ── ACCUSATION ── (handled by selectSuspect / submitAccuse above)
